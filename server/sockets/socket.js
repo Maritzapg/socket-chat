@@ -18,25 +18,35 @@ io.on("connection", client => {
     client.broadcast
       .to(data.room)
       .emit("listPeople", users.getPeopleByRoom(data.room));
+    client.broadcast
+      .to(data.room)
+      .emit(
+        "createMessage",
+        createMessage("Admin", `${data.name} se unió la sala`)
+      );
 
     callback(users.getPeopleByRoom(data.room));
   });
 
-  client.on("createMessage", data => {
+  client.on("createMessage", (data, callback) => {
     let person = users.getPerson(client.id);
     let message = createMessage(person, data.message);
+
     client.broadcast.to(person.room).emit("createMessage", message);
+
+    callback(message);
   });
 
   client.on("disconnect", () => {
     let removedPerson = users.removePerson(client.id);
-
+    console.log(removedPerson);
     client.broadcast
       .to(removedPerson.room)
       .emit(
         "createMessage",
         createMessage("Admin", `${removedPerson.name} abandonó la sala`)
       );
+
     client.broadcast
       .to(removedPerson.room)
       .emit("listPeople", users.getPeopleByRoom(removedPerson.room));
